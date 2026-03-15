@@ -845,7 +845,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         {
             PathType.Root => true,
             PathType.Process => true, // always has virtual folders at minimum
-            PathType.VirtualFolder => false, // prevent recursive wildcard from enumerating modules/threads/etc.
+            PathType.VirtualFolder => true, // safe: virtual folders are excluded from GetChildNames
             _ => false
         };
     }
