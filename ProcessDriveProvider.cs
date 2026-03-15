@@ -190,16 +190,17 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             return new(PathType.VirtualFolder, pid, last, null);
         }
 
-        int lastPid = ParsePid(last);
-        if (lastPid >= 0)
-            return new(PathType.Process, lastPid, null, null);
-
-        // Virtual item (inside a virtual folder)
+        // Virtual item (inside a virtual folder) — check BEFORE process to avoid
+        // misinterpreting items like "12632" or "kernel32.dll" as process nodes
         if (segments.Length >= 2 && VirtualFolderNames.Contains(segments[^2]))
         {
             int pid = segments.Length >= 3 ? ParsePid(segments[^3]) : -1;
             return new(PathType.VirtualItem, pid, segments[^2], last);
         }
+
+        int lastPid = ParsePid(last);
+        if (lastPid >= 0)
+            return new(PathType.Process, lastPid, null, null);
 
         // Unrecognized path — ItemExists will return false (Pid < 0)
         return new(PathType.VirtualItem, -1, null, null);
@@ -485,7 +486,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             var proc = Process.GetProcessById(pid);
             foreach (ProcessThread thread in proc.Threads)
             {
-                var segment = $"Thread_{thread.Id}";
+                var segment = thread.Id.ToString();
                 var itemPath = BuildChildPath(parentPath, segment);
                 WriteItemObject(CreateThreadInfo(thread, directory), itemPath, false);
             }
@@ -752,7 +753,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                             var proc2 = Process.GetProcessById(info.Pid);
                             foreach (ProcessThread t in proc2.Threads)
                             {
-                                var seg = $"Thread_{t.Id}";
+                                var seg = t.Id.ToString();
                                 WriteItemObject(seg, BuildChildPath(path, seg), false);
                             }
                             break;
