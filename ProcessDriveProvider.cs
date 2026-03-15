@@ -105,11 +105,14 @@ sealed record PathInfo(PathType Type, int Pid, string? VirtualFolder, string? Vi
 
 [CmdletProvider("ProcessDrive", ProviderCapabilities.ShouldProcess)]
 [OutputType(typeof(ProcessInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
-[OutputType(typeof(ProcessDetail), ProviderCmdlet = ProviderCmdlet.GetItem)]
 [OutputType(typeof(ModuleInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
 [OutputType(typeof(ThreadInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
 [OutputType(typeof(ServiceInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
 [OutputType(typeof(NetworkInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
+[OutputType(typeof(ProcessDetail), ProviderCmdlet = ProviderCmdlet.GetItem)]
+[OutputType(typeof(ModuleInfo), ProviderCmdlet = ProviderCmdlet.GetItem)]
+[OutputType(typeof(ThreadInfo), ProviderCmdlet = ProviderCmdlet.GetItem)]
+[OutputType(typeof(ServiceInfo), ProviderCmdlet = ProviderCmdlet.GetItem)]
 public class ProcessDriveProvider : NavigationCmdletProvider
 {
     private const char Sep = '\\';
