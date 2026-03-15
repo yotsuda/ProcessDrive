@@ -150,7 +150,7 @@
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <TableColumnHeader><Label>Protocol</Label><Width>5</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Protocol</Label><Width>9</Width></TableColumnHeader>
           <TableColumnHeader><Label>LocalAddress</Label><Width>22</Width></TableColumnHeader>
           <TableColumnHeader><Label>RemoteAddress</Label><Width>22</Width></TableColumnHeader>
           <TableColumnHeader><Label>State</Label></TableColumnHeader>
