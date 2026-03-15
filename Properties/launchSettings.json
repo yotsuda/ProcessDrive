@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ProcessDrive": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "commandLineArgs": "-noexit -command \"$m = [reflection.assembly]::loadFrom('ProcessDrive.dll') | import-module -PassThru; Update-FormatData -AppendPath ([IO.Path]::GetFullPath((Join-Path $m.ModuleBase '..\\..\\..\\module\\ProcessDrive.format.ps1xml')))\""
+    }
+  }
+}
