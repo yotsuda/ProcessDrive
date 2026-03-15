@@ -170,7 +170,7 @@ dir Proc:\ -Recurse | Export-Csv processes.csv
 
 ## Using with AI Agents (PowerShell.MCP)
 
-ProcessDrive works with [PowerShell.MCP](https://www.powershellgallery.com/packages/PowerShell.MCP), enabling AI agents (Claude, GitHub Copilot, etc.) to explore processes through natural conversation:
+ProcessDrive works with [PowerShell.MCP](https://github.com/yotsuda/PowerShell.MCP#readme), enabling AI agents (Claude, GitHub Copilot, etc.) to explore processes through natural conversation:
 
 - "What child processes does chrome have?" → `dir Proc:\chrome_21236`
 - "Show me chrome's network connections" → `dir Proc:\chrome_21236\Network`
