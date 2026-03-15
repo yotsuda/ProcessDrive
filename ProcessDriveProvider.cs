@@ -16,13 +16,13 @@ public class ProcessInfo
 {
     public string Directory { get; set; } = "";
     public string Name { get; set; } = "";
-    public int PID { get; set; }
-    public int ParentPID { get; set; }
+    public int? PID { get; set; }
+    public int? ParentPID { get; set; }
     public string CommandLine { get; set; } = "";
-    public double MemMB { get; set; }
+    public double? MemMB { get; set; }
     public string CPU { get; set; } = "";
-    public int Threads { get; set; }
-    public int Handles { get; set; }
+    public int? Threads { get; set; }
+    public int? Handles { get; set; }
     public string StartTime { get; set; } = "";
 }
 
