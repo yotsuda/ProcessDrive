@@ -141,9 +141,7 @@ dir Proc:\ -Include note* -Recurse
 
 **Find DLL across all processes**
 ```powershell
-dir Proc:\ | ForEach-Object {
-    dir "Proc:\$($_.PSChildName)\Modules" -ErrorAction SilentlyContinue
-} | Where-Object Name -like '*target*'
+dir Proc:\ | % { dir "Proc:\$($_.PSChildName)\Modules" -EA 0 } | ? Name -like '*target*'
 ```
 
 **Sort by memory / CPU**
