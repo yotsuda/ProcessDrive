@@ -13,44 +13,46 @@ if (-not (Get-Module ProcessDrive)) {
     throw 'ProcessDrive module is not loaded. Run Import-Module ProcessDrive first.'
 }
 
-$mdPath = "$PSScriptRoot\md\ProcessDrive"
-
-# --- Update command help markdown ---
-$mdFiles = Measure-PlatyPSMarkdown -Path "$mdPath\*.md"
-
-$cmdFiles = $mdFiles | Where-Object Filetype -match 'CommandHelp'
-if ($cmdFiles) {
-    $cmdFiles | Update-MarkdownCommandHelp -Path { $_.FilePath } -NoBackup
-    Write-Host "Updated: $($cmdFiles.Count) command help file(s)" -ForegroundColor Cyan
-}
-
-# --- Workarounds for PlatyPS v1 bugs ---
-$cmdMdFiles = Get-ChildItem $mdPath -Filter '*.md'
-
 # Remove duplicate __AllParameterSets SYNTAX block
 $syntaxPattern = '(?s)\r?\n### __AllParameterSets\r?\n\r?\n```\r?\n.*?```\r?\n'
 # Remove placeholder OUTPUTS System.Object section
 $outputPattern = '(?s)### System\.Object\r?\n\r?\n\{\{ Fill in the Description \}\}\r?\n\r?\n'
 
-foreach ($file in $cmdMdFiles) {
-    $content = [System.IO.File]::ReadAllText($file.FullName)
-    $cleaned = $content
+foreach ($locale in @('md', 'md-ja')) {
+    $mdPath = "$PSScriptRoot\$locale\ProcessDrive"
+    if (!(Test-Path $mdPath)) { continue }
 
-    # Remove BOM if present
-    if ($cleaned.Length -gt 0 -and $cleaned[0] -eq [char]0xFEFF) {
-        $cleaned = $cleaned.Substring(1)
+    Write-Host "Updating $locale..." -ForegroundColor Cyan
+
+    # --- Update command help markdown ---
+    $mdFiles = Measure-PlatyPSMarkdown -Path "$mdPath\*.md"
+    $cmdFiles = $mdFiles | Where-Object Filetype -match 'CommandHelp'
+    if ($cmdFiles) {
+        $cmdFiles | Update-MarkdownCommandHelp -Path { $_.FilePath } -NoBackup
+        Write-Host "  Updated: $($cmdFiles.Count) command help file(s)"
     }
 
-    $cleaned = [regex]::Replace($cleaned, $syntaxPattern, '')
-    $cleaned = [regex]::Replace($cleaned, $outputPattern, '')
+    # --- Workarounds for PlatyPS v1 bugs ---
+    foreach ($file in Get-ChildItem $mdPath -Filter '*.md') {
+        $content = [System.IO.File]::ReadAllText($file.FullName)
+        $cleaned = $content
 
-    # Normalize line endings to CRLF
-    $cleaned = $cleaned -replace "(?<!\r)\n", "`r`n"
+        # Remove BOM if present
+        if ($cleaned.Length -gt 0 -and $cleaned[0] -eq [char]0xFEFF) {
+            $cleaned = $cleaned.Substring(1)
+        }
 
-    if ($cleaned -ne $content) {
-        $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-        [System.IO.File]::WriteAllText($file.FullName, $cleaned, $utf8NoBom)
-        Write-Host "Cleaned: $($file.Name)" -ForegroundColor Yellow
+        $cleaned = [regex]::Replace($cleaned, $syntaxPattern, '')
+        $cleaned = [regex]::Replace($cleaned, $outputPattern, '')
+
+        # Normalize line endings to CRLF
+        $cleaned = $cleaned -replace "(?<!\r)\n", "`r`n"
+
+        if ($cleaned -ne $content) {
+            $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+            [System.IO.File]::WriteAllText($file.FullName, $cleaned, $utf8NoBom)
+            Write-Host "  Cleaned: $($file.Name)" -ForegroundColor Yellow
+        }
     }
 }
 
