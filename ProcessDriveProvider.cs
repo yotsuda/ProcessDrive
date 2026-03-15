@@ -461,18 +461,45 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
     #endregion
 
-    #region Virtual Folder Data
+    #region Virtual Folder Data & Cache
+
+    private static readonly Dictionary<int, (List<ModuleInfo> data, DateTime time)> _moduleCache = new();
+    private static readonly Dictionary<int, (List<ServiceInfo> data, DateTime time)> _serviceCache = new();
+    private static readonly object _vfCacheLock = new();
+
+    private static List<T>? GetVfCache<T>(Dictionary<int, (List<T> data, DateTime time)> cache, int pid)
+    {
+        lock (_vfCacheLock)
+        {
+            if (cache.TryGetValue(pid, out var entry) && (DateTime.UtcNow - entry.time) < CacheTtl)
+                return entry.data;
+            return null;
+        }
+    }
+
+    private static void SetVfCache<T>(Dictionary<int, (List<T> data, DateTime time)> cache, int pid, List<T> data)
+    {
+        lock (_vfCacheLock) { cache[pid] = (data, DateTime.UtcNow); }
+    }
 
     private void WriteModules(int pid, string parentPath)
     {
         var directory = EnsureDrivePrefix(parentPath);
         try
         {
-            var proc = Process.GetProcessById(pid);
-            foreach (ProcessModule mod in proc.Modules)
+            var cached = Force ? null : GetVfCache(_moduleCache, pid);
+            if (cached == null)
             {
-                var itemPath = BuildChildPath(parentPath, mod.ModuleName);
-                WriteItemObject(CreateModuleInfo(mod, directory), itemPath, false);
+                cached = new List<ModuleInfo>();
+                var proc = Process.GetProcessById(pid);
+                foreach (ProcessModule mod in proc.Modules)
+                    cached.Add(CreateModuleInfo(mod, directory));
+                SetVfCache(_moduleCache, pid, cached);
+            }
+            foreach (var mod in cached)
+            {
+                mod.Directory = directory;
+                WriteItemObject(mod, BuildChildPath(parentPath, mod.Name), false);
             }
         }
         catch (Exception ex)
@@ -505,13 +532,20 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         var directory = EnsureDrivePrefix(parentPath);
         try
         {
-            using var searcher = new ManagementObjectSearcher(
-                $"SELECT Name, DisplayName, State, StartMode FROM Win32_Service WHERE ProcessId = {pid}");
-            foreach (ManagementObject svc in searcher.Get())
+            var cached = Force ? null : GetVfCache(_serviceCache, pid);
+            if (cached == null)
             {
-                var name = svc["Name"]?.ToString() ?? "unknown";
-                var itemPath = BuildChildPath(parentPath, name);
-                WriteItemObject(CreateServiceInfo(svc, directory), itemPath, false);
+                cached = new List<ServiceInfo>();
+                using var searcher = new ManagementObjectSearcher(
+                    $"SELECT Name, DisplayName, State, StartMode FROM Win32_Service WHERE ProcessId = {pid}");
+                foreach (ManagementObject svc in searcher.Get())
+                    cached.Add(CreateServiceInfo(svc, directory));
+                SetVfCache(_serviceCache, pid, cached);
+            }
+            foreach (var svc in cached)
+            {
+                svc.Directory = directory;
+                WriteItemObject(svc, BuildChildPath(parentPath, svc.Name), false);
             }
         }
         catch (Exception ex)
