@@ -14,7 +14,7 @@ $moduleDir = Join-Path $PSScriptRoot '..\module'
 # Clean previous build output
 if (Test-Path $xmlPath) { Remove-Item "$xmlPath\*" -Recurse -Force }
 
-foreach ($locale in @(@{Lang='en-US'; Md="$PSScriptRoot\md"}, @{Lang='ja-JP'; Md="$PSScriptRoot\md-ja"})) {
+foreach ($locale in @(@{Lang='en-US'; Md="$PSScriptRoot\en-US"}, @{Lang='ja-JP'; Md="$PSScriptRoot\ja-JP"})) {
     if (!(Test-Path $locale.Md)) { continue }
 
     Write-Host "Building $($locale.Lang) help..." -ForegroundColor Cyan

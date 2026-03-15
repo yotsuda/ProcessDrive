@@ -18,7 +18,7 @@ $syntaxPattern = '(?s)\r?\n### __AllParameterSets\r?\n\r?\n```\r?\n.*?```\r?\n'
 # Remove placeholder OUTPUTS System.Object section
 $outputPattern = '(?s)### System\.Object\r?\n\r?\n\{\{ Fill in the Description \}\}\r?\n\r?\n'
 
-foreach ($locale in @('md', 'md-ja')) {
+foreach ($locale in @('en-US', 'ja-JP')) {
     $mdPath = "$PSScriptRoot\$locale\ProcessDrive"
     if (!(Test-Path $mdPath)) { continue }
 
