@@ -35,10 +35,10 @@ Returns detailed properties equivalent to Process Explorer's General/Statistics 
 |---|---|
 | General | Name, PID, ParentPID, CommandLine, Path, StartTime, RunningTime |
 | File | FileVersion, Company, Description, ProductName |
-| Memory | WorkingSet, PeakWorkingSet, PrivateBytes, VirtualSize, PagedMemory, PageFaults |
+| Memory | WorkingSetMB, PeakWorkingSetMB, PrivateBytesMB, VirtualSizeMB, PagedMemoryMB, PageFaults |
 | CPU | UserCPU, KernelCPU, TotalCPU |
-| Process | SessionId, BasePriority, PriorityClass, HandleCount, ThreadCount |
-| I/O | ReadOps, WriteOps, ReadBytes, WriteBytes |
+| Process | SessionId, BasePriority, PriorityClass |
+| I/O | IOReadOps, IOWriteOps, IOReadBytesMB, IOWriteBytesMB |
 
 ### Virtual Folders
 
@@ -77,7 +77,7 @@ Things Process Explorer can't do:
 
 ```powershell
 # Top 10 memory consumers
-dir Proc:\ | Sort-Object 'Mem(MB)' -Descending | Select-Object -First 10
+dir Proc:\ | Sort-Object MemMB -Descending | Select-Object -First 10
 
 # Find which process loaded a specific DLL
 dir Proc:\ | ForEach-Object {
@@ -110,13 +110,14 @@ New-ProcDrive MyProc    # Creates MyProc:\
 ## Requirements
 
 - Windows
-- PowerShell 7.0+
+- PowerShell 7.4+
 
 ## Architecture
 
 ProcessDrive is a `NavigationCmdletProvider` that exposes the Windows process tree as a hierarchical drive.
 
 - **Process tree** is built from WMI `Win32_Process` (cached for 10 seconds, `dir -Force` to refresh)
+- **Modules / Services** are cached per process (10 seconds TTL, `dir -Force` to refresh)
+- **Threads / Network** are fetched live on each request
 - **`dir`** uses WMI cache only (fast), **`Get-Item`** adds live stats from `System.Diagnostics.Process`
 - **Network connections** use P/Invoke to `GetExtendedTcpTable` / `GetExtendedUdpTable` (iphlpapi.dll)
-- **Services** are queried from WMI `Win32_Service`
