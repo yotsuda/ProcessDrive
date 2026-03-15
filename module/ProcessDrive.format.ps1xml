@@ -53,9 +53,9 @@
       <TableControl>
         <TableHeaders>
           <TableColumnHeader><Label>Name</Label><Width>30</Width></TableColumnHeader>
-          <TableColumnHeader><Label>Size(KB)</Label><Width>10</Width><Alignment>Right</Alignment></TableColumnHeader>
-          <TableColumnHeader><Label>Version</Label><Width>20</Width></TableColumnHeader>
-          <TableColumnHeader><Label>Company</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Size(KB)</Label><Width>9</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Version</Label><Width>16</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Company</Label><Width>20</Width></TableColumnHeader>
           <TableColumnHeader><Label>Path</Label></TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
@@ -84,11 +84,11 @@
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <TableColumnHeader><Label>TID</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
-          <TableColumnHeader><Label>State</Label><Width>12</Width></TableColumnHeader>
-          <TableColumnHeader><Label>WaitReason</Label><Width>18</Width></TableColumnHeader>
-          <TableColumnHeader><Label>Priority</Label><Width>9</Width><Alignment>Right</Alignment></TableColumnHeader>
-          <TableColumnHeader><Label>CPU(s)</Label><Width>10</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>TID</Label><Width>6</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>State</Label><Width>8</Width></TableColumnHeader>
+          <TableColumnHeader><Label>WaitReason</Label><Width>16</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Priority</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>CPU(s)</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
           <TableColumnHeader><Label>StartTime</Label><Width>20</Width></TableColumnHeader>
           <TableColumnHeader><Label>StartAddress</Label><Alignment>Right</Alignment></TableColumnHeader>
         </TableHeaders>
@@ -120,9 +120,9 @@
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <TableColumnHeader><Label>Name</Label><Width>30</Width></TableColumnHeader>
-          <TableColumnHeader><Label>DisplayName</Label><Width>40</Width></TableColumnHeader>
-          <TableColumnHeader><Label>State</Label><Width>12</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>DisplayName</Label><Width>36</Width></TableColumnHeader>
+          <TableColumnHeader><Label>State</Label><Width>8</Width></TableColumnHeader>
           <TableColumnHeader><Label>StartMode</Label></TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
@@ -150,9 +150,9 @@
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <TableColumnHeader><Label>Protocol</Label><Width>10</Width></TableColumnHeader>
-          <TableColumnHeader><Label>LocalAddress</Label><Width>24</Width></TableColumnHeader>
-          <TableColumnHeader><Label>RemoteAddress</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Protocol</Label><Width>5</Width></TableColumnHeader>
+          <TableColumnHeader><Label>LocalAddress</Label><Width>22</Width></TableColumnHeader>
+          <TableColumnHeader><Label>RemoteAddress</Label><Width>22</Width></TableColumnHeader>
           <TableColumnHeader><Label>State</Label></TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
