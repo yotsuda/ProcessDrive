@@ -5,7 +5,7 @@
     Author            = 'Yoshifumi Tsuda'
     CompanyName       = 'Yoshifumi Tsuda'
     Copyright         = '(c) 2026 Yoshifumi Tsuda. All rights reserved.'
-    Description       = 'Navigate Windows process tree as a PowerShell drive. A CLI alternative to Process Explorer. Provides cd/dir navigation through parent-child process hierarchy, virtual folders for Modules, Threads, Services, and Network connections, detailed process properties via Get-Item, and process kill via Remove-Item.'
+    Description       = 'Navigate Windows process tree as a PowerShell drive (Windows only). A CLI alternative to Process Explorer. Provides cd/dir navigation through parent-child process hierarchy, virtual folders for Modules, Threads, Services, and Network connections, detailed process properties via Get-Item, and process kill via Remove-Item.'
     PowerShellVersion = '7.0'
     CompatiblePSEditions = @('Core')
     FormatsToProcess  = @('ProcessDrive.format.ps1xml')
