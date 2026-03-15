@@ -17,8 +17,6 @@ Creates a PSDrive for navigating the Windows process tree.
 
 ## SYNTAX
 
-### __AllParameterSets
-
 ```
 New-ProcDrive [[-Name] <string>] [<CommonParameters>]
 ```
