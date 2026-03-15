@@ -15,10 +15,10 @@
       <TableControl>
         <TableHeaders>
           <TableColumnHeader><Label>Name</Label><Width>28</Width></TableColumnHeader>
-          <TableColumnHeader><Label>PID</Label><Width>7</Width><Alignment>Right</Alignment></TableColumnHeader>
-          <TableColumnHeader><Label>PPID</Label><Width>7</Width><Alignment>Right</Alignment></TableColumnHeader>
-          <TableColumnHeader><Label>Mem(MB)</Label><Width>9</Width><Alignment>Right</Alignment></TableColumnHeader>
-          <TableColumnHeader><Label>CPU(s)</Label><Width>9</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>PID</Label><Width>6</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>PPID</Label><Width>6</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>Mem(MB)</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
+          <TableColumnHeader><Label>CPU(s)</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
           <TableColumnHeader><Label>Threads</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
           <TableColumnHeader><Label>Handles</Label><Width>8</Width><Alignment>Right</Alignment></TableColumnHeader>
           <TableColumnHeader><Label>StartTime</Label></TableColumnHeader>
