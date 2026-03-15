@@ -3,3 +3,6 @@ obj/
 out/
 .vs/
 *.user
+PlatyPS/xml/
+module/en-US/
+module/ja-JP/
