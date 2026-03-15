@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <AssemblyName>ProcessDrive</AssemblyName>
     <RootNamespace>ProcessDrive</RootNamespace>
     <Nullable>enable</Nullable>

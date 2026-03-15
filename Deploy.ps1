@@ -13,7 +13,7 @@ Write-Host "Building $ModuleName..." -ForegroundColor Cyan
 dotnet build "$ProjectDir\$ModuleName.csproj" -c Release --nologo -v q
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
 
-$BinDir = Join-Path $ProjectDir 'bin\Release\net9.0-windows'
+$BinDir = Join-Path $ProjectDir 'bin\Release\net8.0-windows'
 
 # Create module directory
 if (!(Test-Path $TargetDir)) { New-Item $TargetDir -ItemType Directory -Force | Out-Null }
