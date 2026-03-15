@@ -4,7 +4,7 @@
 
     <!-- Process Info -->
     <View>
-      <Name>ProcessDrive.ProcessInfo.Table</Name>
+      <Name>ProcessDrive.ProcessInfo</Name>
       <ViewSelectedBy>
         <TypeName>ProcessDrive.ProcessInfo</TypeName>
       </ViewSelectedBy>
@@ -29,8 +29,8 @@
               <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>PID</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>ParentPID</PropertyName></TableColumnItem>
-              <TableColumnItem><PropertyName>Mem(MB)</PropertyName></TableColumnItem>
-              <TableColumnItem><PropertyName>CPU(s)</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>MemMB</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>CPU</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Threads</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Handles</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>StartTime</PropertyName></TableColumnItem>
@@ -42,7 +42,7 @@
 
     <!-- Module Info -->
     <View>
-      <Name>ProcessDrive.ModuleInfo.Table</Name>
+      <Name>ProcessDrive.ModuleInfo</Name>
       <ViewSelectedBy>
         <TypeName>ProcessDrive.ModuleInfo</TypeName>
       </ViewSelectedBy>
@@ -62,7 +62,7 @@
           <TableRowEntry>
             <TableColumnItems>
               <TableColumnItem><PropertyName>Name</PropertyName></TableColumnItem>
-              <TableColumnItem><PropertyName>Size(KB)</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>SizeKB</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Version</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Company</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Path</PropertyName></TableColumnItem>
@@ -74,7 +74,7 @@
 
     <!-- Thread Info -->
     <View>
-      <Name>ProcessDrive.ThreadInfo.Table</Name>
+      <Name>ProcessDrive.ThreadInfo</Name>
       <ViewSelectedBy>
         <TypeName>ProcessDrive.ThreadInfo</TypeName>
       </ViewSelectedBy>
@@ -99,7 +99,7 @@
               <TableColumnItem><PropertyName>State</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>WaitReason</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>Priority</PropertyName></TableColumnItem>
-              <TableColumnItem><PropertyName>CPU(s)</PropertyName></TableColumnItem>
+              <TableColumnItem><PropertyName>CPU</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>StartTime</PropertyName></TableColumnItem>
               <TableColumnItem><PropertyName>StartAddress</PropertyName></TableColumnItem>
             </TableColumnItems>
@@ -110,7 +110,7 @@
 
     <!-- Service Info -->
     <View>
-      <Name>ProcessDrive.ServiceInfo.Table</Name>
+      <Name>ProcessDrive.ServiceInfo</Name>
       <ViewSelectedBy>
         <TypeName>ProcessDrive.ServiceInfo</TypeName>
       </ViewSelectedBy>
@@ -140,7 +140,7 @@
 
     <!-- Network Info -->
     <View>
-      <Name>ProcessDrive.NetworkInfo.Table</Name>
+      <Name>ProcessDrive.NetworkInfo</Name>
       <ViewSelectedBy>
         <TypeName>ProcessDrive.NetworkInfo</TypeName>
       </ViewSelectedBy>

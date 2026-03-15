@@ -10,11 +10,106 @@ using System.Runtime.InteropServices;
 
 namespace ProcessDrive;
 
+#region Output Types
+
+public class ProcessInfo
+{
+    public string Directory { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int PID { get; set; }
+    public int ParentPID { get; set; }
+    public string CommandLine { get; set; } = "";
+    public double MemMB { get; set; }
+    public string CPU { get; set; } = "";
+    public int Threads { get; set; }
+    public int Handles { get; set; }
+    public string StartTime { get; set; } = "";
+}
+
+public class ProcessDetail : ProcessInfo
+{
+    public double WorkingSetMB { get; set; }
+    public double PeakWorkingSetMB { get; set; }
+    public double PrivateBytesMB { get; set; }
+    public double VirtualSizeMB { get; set; }
+    public double PeakVirtualSizeMB { get; set; }
+    public double PagedMemoryMB { get; set; }
+    public double NonpagedMemoryKB { get; set; }
+    public double UserCPU { get; set; }
+    public double KernelCPU { get; set; }
+    public double TotalCPU { get; set; }
+    public int SessionId { get; set; }
+    public int BasePriority { get; set; }
+    public string PriorityClass { get; set; } = "";
+    public string Path { get; set; } = "";
+    public string FileVersion { get; set; } = "";
+    public string Company { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string ProductName { get; set; } = "";
+    public string RunningTime { get; set; } = "";
+    public long IOReadOps { get; set; }
+    public long IOWriteOps { get; set; }
+    public long IOOtherOps { get; set; }
+    public double IOReadBytesMB { get; set; }
+    public double IOWriteBytesMB { get; set; }
+    public double IOOtherBytesMB { get; set; }
+    public long PageFaults { get; set; }
+}
+
+public class ModuleInfo
+{
+    public string Directory { get; set; } = "";
+    public string Name { get; set; } = "";
+    public double SizeKB { get; set; }
+    public string Path { get; set; } = "";
+    public string Version { get; set; } = "";
+    public string Company { get; set; } = "";
+    public string Description { get; set; } = "";
+}
+
+public class ThreadInfo
+{
+    public string Directory { get; set; } = "";
+    public int TID { get; set; }
+    public string State { get; set; } = "";
+    public string WaitReason { get; set; } = "";
+    public int Priority { get; set; }
+    public double CPU { get; set; }
+    public string StartTime { get; set; } = "";
+    public string StartAddress { get; set; } = "";
+}
+
+public class ServiceInfo
+{
+    public string Directory { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string State { get; set; } = "";
+    public string StartMode { get; set; } = "";
+}
+
+public class NetworkInfo
+{
+    public string Directory { get; set; } = "";
+    public string Protocol { get; set; } = "";
+    public string LocalAddress { get; set; } = "";
+    public string RemoteAddress { get; set; } = "";
+    public string State { get; set; } = "";
+}
+
+#endregion
+
 enum PathType { Root, Process, VirtualFolder, VirtualItem }
 
 sealed record PathInfo(PathType Type, int Pid, string? VirtualFolder, string? VirtualItem);
 
 [CmdletProvider("ProcessDrive", ProviderCapabilities.ShouldProcess)]
+[OutputType(typeof(ProcessInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
+[OutputType(typeof(ProcessDetail), ProviderCmdlet = ProviderCmdlet.GetItem)]
+[OutputType(typeof(ModuleInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
+[OutputType(typeof(ThreadInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
+[OutputType(typeof(ServiceInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
+[OutputType(typeof(NetworkInfo), ProviderCmdlet = ProviderCmdlet.GetChildItem)]
 public class ProcessDriveProvider : NavigationCmdletProvider
 {
     private const char Sep = '\\';
@@ -181,28 +276,23 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
     #endregion
 
-    #region PSObject Factories
+    #region Object Factories
 
-    private PSObject CreateProcessObject(ProcInfo info, string directory)
+    private static ProcessInfo CreateProcessInfo(ProcInfo info, string directory) => new()
     {
-        var pso = new PSObject();
-        pso.TypeNames.Insert(0, "ProcessDrive.ProcessInfo");
-        pso.Properties.Add(new PSNoteProperty("Directory", directory));
-        pso.Properties.Add(new PSNoteProperty("Name", info.Name));
-        pso.Properties.Add(new PSNoteProperty("PID", info.Pid));
-        pso.Properties.Add(new PSNoteProperty("ParentPID", info.ParentPid));
-        pso.Properties.Add(new PSNoteProperty("CommandLine", info.CommandLine));
-        pso.Properties.Add(new PSNoteProperty("Mem(MB)", Math.Round(info.WorkingSetSize / 1048576.0, 1)));
-        pso.Properties.Add(new PSNoteProperty("CPU(s)", ""));
-        pso.Properties.Add(new PSNoteProperty("Threads", info.ThreadCount));
-        pso.Properties.Add(new PSNoteProperty("Handles", info.HandleCount));
-        pso.Properties.Add(new PSNoteProperty("StartTime", FormatWmiDateTime(info.CreationDate)));
-        return pso;
-    }
+        Directory = directory,
+        Name = info.Name,
+        PID = info.Pid,
+        ParentPID = info.ParentPid,
+        CommandLine = info.CommandLine,
+        MemMB = Math.Round(info.WorkingSetSize / 1048576.0, 1),
+        Threads = info.ThreadCount,
+        Handles = info.HandleCount,
+        StartTime = FormatWmiDateTime(info.CreationDate)
+    };
 
     private static string FormatWmiDateTime(string wmiDate)
     {
-        // WMI format: "20260313095354.000000+540"
         if (wmiDate.Length >= 14 &&
             DateTime.TryParseExact(wmiDate[..14], "yyyyMMddHHmmss",
                 System.Globalization.CultureInfo.InvariantCulture,
@@ -211,68 +301,71 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         return "N/A";
     }
 
-    private PSObject CreateDetailedProcessObject(ProcInfo info, string directory)
+    private static ProcessDetail CreateProcessDetail(ProcInfo info, string directory)
     {
-        var pso = CreateProcessObject(info, directory);
-        pso.TypeNames.Insert(0, "ProcessDrive.ProcessDetail");
+        var detail = new ProcessDetail
+        {
+            Directory = directory,
+            Name = info.Name,
+            PID = info.Pid,
+            ParentPID = info.ParentPid,
+            CommandLine = info.CommandLine,
+            MemMB = Math.Round(info.WorkingSetSize / 1048576.0, 1),
+            Threads = info.ThreadCount,
+            Handles = info.HandleCount,
+            StartTime = FormatWmiDateTime(info.CreationDate)
+        };
 
-        // Single Process API call for all detailed properties
         try
         {
             var proc = Process.GetProcessById(info.Pid);
 
-            // CPU (not available from WMI cache, so fill in the dir column too)
             try
             {
-                pso.Properties["CPU(s)"].Value = Math.Round(proc.TotalProcessorTime.TotalSeconds, 1);
-                pso.Properties.Add(new PSNoteProperty("UserCPU(s)", Math.Round(proc.UserProcessorTime.TotalSeconds, 2)));
-                pso.Properties.Add(new PSNoteProperty("KernelCPU(s)", Math.Round(proc.PrivilegedProcessorTime.TotalSeconds, 2)));
-                pso.Properties.Add(new PSNoteProperty("TotalCPU(s)", Math.Round(proc.TotalProcessorTime.TotalSeconds, 2)));
+                detail.CPU = Math.Round(proc.TotalProcessorTime.TotalSeconds, 1).ToString();
+                detail.UserCPU = Math.Round(proc.UserProcessorTime.TotalSeconds, 2);
+                detail.KernelCPU = Math.Round(proc.PrivilegedProcessorTime.TotalSeconds, 2);
+                detail.TotalCPU = Math.Round(proc.TotalProcessorTime.TotalSeconds, 2);
             }
             catch { }
 
-            // Memory details
-            pso.Properties.Add(new PSNoteProperty("WorkingSet(MB)", Math.Round(proc.WorkingSet64 / 1048576.0, 1)));
-            pso.Properties.Add(new PSNoteProperty("PeakWorkingSet(MB)", Math.Round(proc.PeakWorkingSet64 / 1048576.0, 1)));
-            pso.Properties.Add(new PSNoteProperty("PrivateBytes(MB)", Math.Round(proc.PrivateMemorySize64 / 1048576.0, 1)));
-            pso.Properties.Add(new PSNoteProperty("VirtualSize(MB)", Math.Round(proc.VirtualMemorySize64 / 1048576.0, 1)));
-            pso.Properties.Add(new PSNoteProperty("PeakVirtualSize(MB)", Math.Round(proc.PeakVirtualMemorySize64 / 1048576.0, 1)));
-            pso.Properties.Add(new PSNoteProperty("PagedMemory(MB)", Math.Round(proc.PagedMemorySize64 / 1048576.0, 1)));
-            pso.Properties.Add(new PSNoteProperty("NonpagedMemory(KB)", Math.Round(proc.NonpagedSystemMemorySize64 / 1024.0, 1)));
+            detail.WorkingSetMB = Math.Round(proc.WorkingSet64 / 1048576.0, 1);
+            detail.PeakWorkingSetMB = Math.Round(proc.PeakWorkingSet64 / 1048576.0, 1);
+            detail.PrivateBytesMB = Math.Round(proc.PrivateMemorySize64 / 1048576.0, 1);
+            detail.VirtualSizeMB = Math.Round(proc.VirtualMemorySize64 / 1048576.0, 1);
+            detail.PeakVirtualSizeMB = Math.Round(proc.PeakVirtualMemorySize64 / 1048576.0, 1);
+            detail.PagedMemoryMB = Math.Round(proc.PagedMemorySize64 / 1048576.0, 1);
+            detail.NonpagedMemoryKB = Math.Round(proc.NonpagedSystemMemorySize64 / 1024.0, 1);
 
-            // Process details
-            pso.Properties.Add(new PSNoteProperty("SessionId", proc.SessionId));
-            pso.Properties.Add(new PSNoteProperty("BasePriority", proc.BasePriority));
-            try { pso.Properties.Add(new PSNoteProperty("PriorityClass", proc.PriorityClass.ToString())); }
-            catch { pso.Properties.Add(new PSNoteProperty("PriorityClass", "N/A")); }
+            detail.SessionId = proc.SessionId;
+            detail.BasePriority = proc.BasePriority;
+            try { detail.PriorityClass = proc.PriorityClass.ToString(); }
+            catch { detail.PriorityClass = "N/A"; }
 
-            // File info
             try
             {
                 var mainModule = proc.MainModule;
                 if (mainModule != null)
                 {
-                    pso.Properties.Add(new PSNoteProperty("Path", mainModule.FileName));
+                    detail.Path = mainModule.FileName;
                     var vi = mainModule.FileVersionInfo;
-                    pso.Properties.Add(new PSNoteProperty("FileVersion", vi.FileVersion ?? ""));
-                    pso.Properties.Add(new PSNoteProperty("Company", vi.CompanyName ?? ""));
-                    pso.Properties.Add(new PSNoteProperty("Description", vi.FileDescription ?? ""));
-                    pso.Properties.Add(new PSNoteProperty("ProductName", vi.ProductName ?? ""));
+                    detail.FileVersion = vi.FileVersion ?? "";
+                    detail.Company = vi.CompanyName ?? "";
+                    detail.Description = vi.FileDescription ?? "";
+                    detail.ProductName = vi.ProductName ?? "";
                 }
             }
             catch { }
 
-            // Running time
             try
             {
                 var running = DateTime.Now - proc.StartTime;
-                pso.Properties.Add(new PSNoteProperty("RunningTime", $"{(int)running.TotalDays}d {running.Hours}h {running.Minutes}m"));
+                detail.RunningTime = $"{(int)running.TotalDays}d {running.Hours}h {running.Minutes}m";
             }
             catch { }
         }
         catch { }
 
-        // I/O stats from WMI (single query for this PID)
         try
         {
             using var searcher = new ManagementObjectSearcher(
@@ -281,112 +374,78 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                 $"PageFaults FROM Win32_Process WHERE ProcessId = {info.Pid}");
             foreach (ManagementObject obj in searcher.Get())
             {
-                var reads = Convert.ToInt64(obj["ReadTransferCount"]);
-                var writes = Convert.ToInt64(obj["WriteTransferCount"]);
-                var other = Convert.ToInt64(obj["OtherTransferCount"]);
-                pso.Properties.Add(new PSNoteProperty("IO.ReadOps", Convert.ToInt64(obj["ReadOperationCount"])));
-                pso.Properties.Add(new PSNoteProperty("IO.WriteOps", Convert.ToInt64(obj["WriteOperationCount"])));
-                pso.Properties.Add(new PSNoteProperty("IO.OtherOps", Convert.ToInt64(obj["OtherOperationCount"])));
-                pso.Properties.Add(new PSNoteProperty("IO.ReadBytes(MB)", Math.Round(reads / 1048576.0, 1)));
-                pso.Properties.Add(new PSNoteProperty("IO.WriteBytes(MB)", Math.Round(writes / 1048576.0, 1)));
-                pso.Properties.Add(new PSNoteProperty("IO.OtherBytes(MB)", Math.Round(other / 1048576.0, 1)));
-                pso.Properties.Add(new PSNoteProperty("PageFaults", Convert.ToInt64(obj["PageFaults"])));
+                detail.IOReadOps = Convert.ToInt64(obj["ReadOperationCount"]);
+                detail.IOWriteOps = Convert.ToInt64(obj["WriteOperationCount"]);
+                detail.IOOtherOps = Convert.ToInt64(obj["OtherOperationCount"]);
+                detail.IOReadBytesMB = Math.Round(Convert.ToInt64(obj["ReadTransferCount"]) / 1048576.0, 1);
+                detail.IOWriteBytesMB = Math.Round(Convert.ToInt64(obj["WriteTransferCount"]) / 1048576.0, 1);
+                detail.IOOtherBytesMB = Math.Round(Convert.ToInt64(obj["OtherTransferCount"]) / 1048576.0, 1);
+                detail.PageFaults = Convert.ToInt64(obj["PageFaults"]);
             }
         }
         catch { }
 
-        return pso;
+        return detail;
     }
 
-    private PSObject CreateVirtualFolderObject(string name, string directory)
+    private static ProcessInfo CreateVirtualFolderInfo(string name, string directory) => new()
     {
-        var pso = new PSObject();
-        pso.TypeNames.Insert(0, "ProcessDrive.ProcessInfo");
-        pso.Properties.Add(new PSNoteProperty("Directory", directory));
-        pso.Properties.Add(new PSNoteProperty("Name", $"[{name}]"));
-        pso.Properties.Add(new PSNoteProperty("PID", ""));
-        pso.Properties.Add(new PSNoteProperty("ParentPID", ""));
-        pso.Properties.Add(new PSNoteProperty("CommandLine", ""));
-        pso.Properties.Add(new PSNoteProperty("Mem(MB)", ""));
-        pso.Properties.Add(new PSNoteProperty("CPU(s)", ""));
-        pso.Properties.Add(new PSNoteProperty("Threads", ""));
-        pso.Properties.Add(new PSNoteProperty("Handles", ""));
-        pso.Properties.Add(new PSNoteProperty("StartTime", VirtualFolderDescriptions.GetValueOrDefault(name, "")));
-        return pso;
-    }
+        Directory = directory,
+        Name = $"[{name}]",
+        StartTime = VirtualFolderDescriptions.GetValueOrDefault(name, "")
+    };
 
-    private PSObject CreateModuleObject(ProcessModule mod, string directory)
+    private static ModuleInfo CreateModuleInfo(ProcessModule mod, string directory)
     {
-        var pso = new PSObject();
-        pso.TypeNames.Insert(0, "ProcessDrive.ModuleInfo");
-        pso.Properties.Add(new PSNoteProperty("Directory", directory));
-        pso.Properties.Add(new PSNoteProperty("Name", mod.ModuleName));
-        pso.Properties.Add(new PSNoteProperty("Size(KB)", Math.Round(mod.ModuleMemorySize / 1024.0, 1)));
-        pso.Properties.Add(new PSNoteProperty("Path", mod.FileName));
+        var info = new ModuleInfo
+        {
+            Directory = directory,
+            Name = mod.ModuleName,
+            SizeKB = Math.Round(mod.ModuleMemorySize / 1024.0, 1),
+            Path = mod.FileName
+        };
         try
         {
             var vi = mod.FileVersionInfo;
-            pso.Properties.Add(new PSNoteProperty("Version", vi.FileVersion ?? ""));
-            pso.Properties.Add(new PSNoteProperty("Company", vi.CompanyName ?? ""));
-            pso.Properties.Add(new PSNoteProperty("Description", vi.FileDescription ?? ""));
+            info.Version = vi.FileVersion ?? "";
+            info.Company = vi.CompanyName ?? "";
+            info.Description = vi.FileDescription ?? "";
         }
-        catch
-        {
-            pso.Properties.Add(new PSNoteProperty("Version", ""));
-            pso.Properties.Add(new PSNoteProperty("Company", ""));
-            pso.Properties.Add(new PSNoteProperty("Description", ""));
-        }
-        return pso;
+        catch { }
+        return info;
     }
 
-    private PSObject CreateThreadObject(ProcessThread thread, string directory)
+    private static ThreadInfo CreateThreadInfo(ProcessThread thread, string directory)
     {
-        var pso = new PSObject();
-        pso.TypeNames.Insert(0, "ProcessDrive.ThreadInfo");
-        pso.Properties.Add(new PSNoteProperty("Directory", directory));
-        pso.Properties.Add(new PSNoteProperty("TID", thread.Id));
-        try { pso.Properties.Add(new PSNoteProperty("State", thread.ThreadState.ToString())); }
-        catch { pso.Properties.Add(new PSNoteProperty("State", "N/A")); }
-        try
-        {
-            pso.Properties.Add(new PSNoteProperty("WaitReason",
-                thread.ThreadState == System.Diagnostics.ThreadState.Wait ? thread.WaitReason.ToString() : ""));
-        }
-        catch { pso.Properties.Add(new PSNoteProperty("WaitReason", "")); }
-        pso.Properties.Add(new PSNoteProperty("Priority", thread.CurrentPriority));
-        try { pso.Properties.Add(new PSNoteProperty("CPU(s)", Math.Round(thread.TotalProcessorTime.TotalSeconds, 2))); }
-        catch { pso.Properties.Add(new PSNoteProperty("CPU(s)", 0)); }
-        try { pso.Properties.Add(new PSNoteProperty("StartTime", thread.StartTime.ToString("yyyy/MM/dd HH:mm:ss"))); }
-        catch { pso.Properties.Add(new PSNoteProperty("StartTime", "N/A")); }
-        try { pso.Properties.Add(new PSNoteProperty("StartAddress", $"0x{thread.StartAddress:X}")); }
-        catch { pso.Properties.Add(new PSNoteProperty("StartAddress", "N/A")); }
-        return pso;
+        var info = new ThreadInfo { Directory = directory, TID = thread.Id };
+        try { info.State = thread.ThreadState.ToString(); } catch { info.State = "N/A"; }
+        try { info.WaitReason = thread.ThreadState == System.Diagnostics.ThreadState.Wait ? thread.WaitReason.ToString() : ""; }
+        catch { }
+        info.Priority = thread.CurrentPriority;
+        try { info.CPU = Math.Round(thread.TotalProcessorTime.TotalSeconds, 2); } catch { }
+        try { info.StartTime = thread.StartTime.ToString("yyyy/MM/dd HH:mm:ss"); } catch { info.StartTime = "N/A"; }
+        try { info.StartAddress = $"0x{thread.StartAddress:X}"; } catch { info.StartAddress = "N/A"; }
+        return info;
     }
 
-    private PSObject CreateServiceObject(ManagementObject svc, string directory)
+    private static ServiceInfo CreateServiceInfo(ManagementObject svc, string directory) => new()
     {
-        var pso = new PSObject();
-        pso.TypeNames.Insert(0, "ProcessDrive.ServiceInfo");
-        pso.Properties.Add(new PSNoteProperty("Directory", directory));
-        pso.Properties.Add(new PSNoteProperty("Name", svc["Name"]?.ToString() ?? ""));
-        pso.Properties.Add(new PSNoteProperty("DisplayName", svc["DisplayName"]?.ToString() ?? ""));
-        pso.Properties.Add(new PSNoteProperty("State", svc["State"]?.ToString() ?? ""));
-        pso.Properties.Add(new PSNoteProperty("StartMode", svc["StartMode"]?.ToString() ?? ""));
-        return pso;
-    }
+        Directory = directory,
+        Name = svc["Name"]?.ToString() ?? "",
+        DisplayName = svc["DisplayName"]?.ToString() ?? "",
+        State = svc["State"]?.ToString() ?? "",
+        StartMode = svc["StartMode"]?.ToString() ?? ""
+    };
 
-    private static PSObject CreateNetworkObject(string protocol, string localAddr, int localPort,
-        string remoteAddr, int remotePort, string state, string directory)
+    private static NetworkInfo CreateNetworkInfo(string protocol, string localAddr, int localPort,
+        string remoteAddr, int remotePort, string state, string directory) => new()
     {
-        var pso = new PSObject();
-        pso.TypeNames.Insert(0, "ProcessDrive.NetworkInfo");
-        pso.Properties.Add(new PSNoteProperty("Directory", directory));
-        pso.Properties.Add(new PSNoteProperty("Protocol", protocol));
-        pso.Properties.Add(new PSNoteProperty("LocalAddress", $"{localAddr}:{localPort}"));
-        pso.Properties.Add(new PSNoteProperty("RemoteAddress", remoteAddr.Length > 0 ? $"{remoteAddr}:{remotePort}" : ""));
-        pso.Properties.Add(new PSNoteProperty("State", state));
-        return pso;
-    }
+        Directory = directory,
+        Protocol = protocol,
+        LocalAddress = $"{localAddr}:{localPort}",
+        RemoteAddress = remoteAddr.Length > 0 ? $"{remoteAddr}:{remotePort}" : "",
+        State = state
+    };
 
     #endregion
 
@@ -401,7 +460,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             foreach (ProcessModule mod in proc.Modules)
             {
                 var itemPath = BuildChildPath(parentPath, mod.ModuleName);
-                WriteItemObject(CreateModuleObject(mod, directory), itemPath, false);
+                WriteItemObject(CreateModuleInfo(mod, directory), itemPath, false);
             }
         }
         catch (Exception ex)
@@ -420,7 +479,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             {
                 var segment = $"Thread_{thread.Id}";
                 var itemPath = BuildChildPath(parentPath, segment);
-                WriteItemObject(CreateThreadObject(thread, directory), itemPath, false);
+                WriteItemObject(CreateThreadInfo(thread, directory), itemPath, false);
             }
         }
         catch (Exception ex)
@@ -440,7 +499,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             {
                 var name = svc["Name"]?.ToString() ?? "unknown";
                 var itemPath = BuildChildPath(parentPath, name);
-                WriteItemObject(CreateServiceObject(svc, directory), itemPath, false);
+                WriteItemObject(CreateServiceInfo(svc, directory), itemPath, false);
             }
         }
         catch (Exception ex)
@@ -459,7 +518,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             {
                 var segment = $"TCP_{conn.LocalAddr}_{conn.LocalPort}";
                 var itemPath = BuildChildPath(parentPath, segment);
-                WriteItemObject(CreateNetworkObject("TCP", conn.LocalAddr, conn.LocalPort,
+                WriteItemObject(CreateNetworkInfo("TCP", conn.LocalAddr, conn.LocalPort,
                     conn.RemoteAddr, conn.RemotePort, conn.State, directory), itemPath, false);
             }
             // UDP listeners
@@ -467,7 +526,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             {
                 var segment = $"UDP_{conn.LocalAddr}_{conn.LocalPort}";
                 var itemPath = BuildChildPath(parentPath, segment);
-                WriteItemObject(CreateNetworkObject("UDP", conn.LocalAddr, conn.LocalPort,
+                WriteItemObject(CreateNetworkInfo("UDP", conn.LocalAddr, conn.LocalPort,
                     "", 0, "", directory), itemPath, false);
             }
         }
@@ -528,11 +587,11 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             case PathType.Process:
                 var (map2, _, _) = BuildTree();
                 if (map2.TryGetValue(info.Pid, out var procInfo))
-                    WriteItemObject(CreateDetailedProcessObject(procInfo, directory), path, true);
+                    WriteItemObject(CreateProcessDetail(procInfo, directory), path, true);
                 break;
 
             case PathType.VirtualFolder:
-                WriteItemObject(CreateVirtualFolderObject(info.VirtualFolder!, directory), path, true);
+                WriteItemObject(CreateVirtualFolderInfo(info.VirtualFolder!, directory), path, true);
                 break;
 
             case PathType.VirtualItem:
@@ -574,7 +633,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                 foreach (var folder in VirtualFolderNames.Order())
                 {
                     var folderPath = BuildChildPath(path, folder);
-                    WriteItemObject(CreateVirtualFolderObject(folder, directory), folderPath, true);
+                    WriteItemObject(CreateVirtualFolderInfo(folder, directory), folderPath, true);
                 }
 
                 // Second pass: recurse into children
@@ -613,7 +672,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         {
             var info = map[cpid];
             var childPath = BuildChildPath(parentPath, FormatSegment(cpid, info.Name));
-            WriteItemObject(CreateProcessObject(info, directory), childPath, true);
+            WriteItemObject(CreateProcessInfo(info, directory), childPath, true);
         }
     }
 
