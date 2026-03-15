@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <AssemblyName>ProcessDrive</AssemblyName>
     <RootNamespace>ProcessDrive</RootNamespace>
+    <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <Version>0.1.0</Version>
     <Authors>yoshifumi.tsuda</Authors>
