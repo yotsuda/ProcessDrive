@@ -65,11 +65,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
     }
 
     private static string BuildChildPath(string parentPath, string childSegment)
-    {
-        if (IsRootPath(parentPath))
-            return parentPath.TrimEnd(Sep) + Sep + childSegment;
-        return parentPath.TrimEnd(Sep) + Sep + childSegment;
-    }
+        => parentPath.TrimEnd(Sep) + Sep + childSegment;
 
     private string EnsureDrivePrefix(string path)
     {
@@ -117,7 +113,8 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
     #region Process Tree
 
-    private sealed record ProcInfo(int Pid, int ParentPid, string Name, string CommandLine);
+    private sealed record ProcInfo(int Pid, int ParentPid, string Name, string CommandLine,
+        long WorkingSetSize, int ThreadCount, int HandleCount, string CreationDate);
 
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
     private static DateTime _cacheTime;
@@ -135,7 +132,8 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             var children = new Dictionary<int, List<int>>();
 
             using var searcher = new ManagementObjectSearcher(
-                "SELECT ProcessId, ParentProcessId, Name, CommandLine FROM Win32_Process");
+                "SELECT ProcessId, ParentProcessId, Name, CommandLine, " +
+                "WorkingSetSize, ThreadCount, HandleCount, CreationDate FROM Win32_Process");
 
             foreach (ManagementObject obj in searcher.Get())
             {
@@ -143,9 +141,13 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                 int ppid = Convert.ToInt32(obj["ParentProcessId"]);
                 string name = obj["Name"]?.ToString() ?? "unknown";
                 string cmdLine = obj["CommandLine"]?.ToString() ?? "";
+                long ws = Convert.ToInt64(obj["WorkingSetSize"] ?? 0);
+                int threads = Convert.ToInt32(obj["ThreadCount"] ?? 0);
+                int handles = Convert.ToInt32(obj["HandleCount"] ?? 0);
+                string creation = obj["CreationDate"]?.ToString() ?? "";
                 if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                     name = name[..^4];
-                map[pid] = new ProcInfo(pid, ppid, name, cmdLine);
+                map[pid] = new ProcInfo(pid, ppid, name, cmdLine, ws, threads, handles, creation);
             }
 
             foreach (var proc in map.Values)
@@ -180,27 +182,23 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         pso.Properties.Add(new PSNoteProperty("PID", info.Pid));
         pso.Properties.Add(new PSNoteProperty("ParentPID", info.ParentPid));
         pso.Properties.Add(new PSNoteProperty("CommandLine", info.CommandLine));
-
-        try
-        {
-            var proc = Process.GetProcessById(info.Pid);
-            pso.Properties.Add(new PSNoteProperty("Mem(MB)", Math.Round(proc.WorkingSet64 / 1048576.0, 1)));
-            pso.Properties.Add(new PSNoteProperty("CPU(s)", Math.Round(proc.TotalProcessorTime.TotalSeconds, 1)));
-            pso.Properties.Add(new PSNoteProperty("Threads", proc.Threads.Count));
-            pso.Properties.Add(new PSNoteProperty("Handles", proc.HandleCount));
-            try { pso.Properties.Add(new PSNoteProperty("StartTime", proc.StartTime.ToString("yyyy/MM/dd HH:mm:ss"))); }
-            catch { pso.Properties.Add(new PSNoteProperty("StartTime", "N/A")); }
-        }
-        catch
-        {
-            pso.Properties.Add(new PSNoteProperty("Mem(MB)", 0));
-            pso.Properties.Add(new PSNoteProperty("CPU(s)", 0));
-            pso.Properties.Add(new PSNoteProperty("Threads", 0));
-            pso.Properties.Add(new PSNoteProperty("Handles", 0));
-            pso.Properties.Add(new PSNoteProperty("StartTime", "N/A"));
-        }
-
+        pso.Properties.Add(new PSNoteProperty("Mem(MB)", Math.Round(info.WorkingSetSize / 1048576.0, 1)));
+        pso.Properties.Add(new PSNoteProperty("CPU(s)", ""));
+        pso.Properties.Add(new PSNoteProperty("Threads", info.ThreadCount));
+        pso.Properties.Add(new PSNoteProperty("Handles", info.HandleCount));
+        pso.Properties.Add(new PSNoteProperty("StartTime", FormatWmiDateTime(info.CreationDate)));
         return pso;
+    }
+
+    private static string FormatWmiDateTime(string wmiDate)
+    {
+        // WMI format: "20260313095354.000000+540"
+        if (wmiDate.Length >= 14 &&
+            DateTime.TryParseExact(wmiDate[..14], "yyyyMMddHHmmss",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var dt))
+            return dt.ToString("yyyy/MM/dd HH:mm:ss");
+        return "N/A";
     }
 
     private PSObject CreateDetailedProcessObject(ProcInfo info, string directory)
@@ -208,9 +206,20 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         var pso = CreateProcessObject(info, directory);
         pso.TypeNames.Insert(0, "ProcessDrive.ProcessDetail");
 
+        // Single Process API call for all detailed properties
         try
         {
             var proc = Process.GetProcessById(info.Pid);
+
+            // CPU (not available from WMI cache, so fill in the dir column too)
+            try
+            {
+                pso.Properties["CPU(s)"].Value = Math.Round(proc.TotalProcessorTime.TotalSeconds, 1);
+                pso.Properties.Add(new PSNoteProperty("UserCPU(s)", Math.Round(proc.UserProcessorTime.TotalSeconds, 2)));
+                pso.Properties.Add(new PSNoteProperty("KernelCPU(s)", Math.Round(proc.PrivilegedProcessorTime.TotalSeconds, 2)));
+                pso.Properties.Add(new PSNoteProperty("TotalCPU(s)", Math.Round(proc.TotalProcessorTime.TotalSeconds, 2)));
+            }
+            catch { }
 
             // Memory details
             pso.Properties.Add(new PSNoteProperty("WorkingSet(MB)", Math.Round(proc.WorkingSet64 / 1048576.0, 1)));
@@ -221,21 +230,11 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             pso.Properties.Add(new PSNoteProperty("PagedMemory(MB)", Math.Round(proc.PagedMemorySize64 / 1048576.0, 1)));
             pso.Properties.Add(new PSNoteProperty("NonpagedMemory(KB)", Math.Round(proc.NonpagedSystemMemorySize64 / 1024.0, 1)));
 
-            // CPU details
-            try
-            {
-                pso.Properties.Add(new PSNoteProperty("UserCPU(s)", Math.Round(proc.UserProcessorTime.TotalSeconds, 2)));
-                pso.Properties.Add(new PSNoteProperty("KernelCPU(s)", Math.Round(proc.PrivilegedProcessorTime.TotalSeconds, 2)));
-                pso.Properties.Add(new PSNoteProperty("TotalCPU(s)", Math.Round(proc.TotalProcessorTime.TotalSeconds, 2)));
-            }
-            catch { }
-
             // Process details
             pso.Properties.Add(new PSNoteProperty("SessionId", proc.SessionId));
             pso.Properties.Add(new PSNoteProperty("BasePriority", proc.BasePriority));
-            pso.Properties.Add(new PSNoteProperty("PriorityClass", proc.PriorityClass.ToString()));
-            pso.Properties.Add(new PSNoteProperty("HandleCount", proc.HandleCount));
-            pso.Properties.Add(new PSNoteProperty("ThreadCount", proc.Threads.Count));
+            try { pso.Properties.Add(new PSNoteProperty("PriorityClass", proc.PriorityClass.ToString())); }
+            catch { pso.Properties.Add(new PSNoteProperty("PriorityClass", "N/A")); }
 
             // File info
             try
@@ -543,9 +542,10 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             {
                 var (map, children, roots) = BuildTree();
                 var directory = EnsureDrivePrefix(path);
-                WriteImmediateChildren(path, directory, roots, map, children);
+                var sorted = SortChildPids(roots, map);
+                WriteImmediateChildren(path, directory, sorted, map);
                 if (recurse)
-                    RecurseChildren(path, roots, map, children);
+                    RecurseChildren(path, sorted, map, children);
                 break;
             }
             case PathType.Process:
@@ -553,9 +553,10 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                 var (map, children, _) = BuildTree();
                 var childPids = children.TryGetValue(info.Pid, out var c) ? c : new List<int>();
                 var directory = EnsureDrivePrefix(path);
+                var sorted = SortChildPids(childPids, map);
 
                 // First pass: write immediate child processes
-                WriteImmediateChildren(path, directory, childPids, map, children);
+                WriteImmediateChildren(path, directory, sorted, map);
 
                 // Write virtual folders (same Directory group as child processes)
                 foreach (var folder in VirtualFolderNames.Order())
@@ -566,7 +567,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
                 // Second pass: recurse into children
                 if (recurse)
-                    RecurseChildren(path, childPids, map, children);
+                    RecurseChildren(path, sorted, map, children);
                 break;
             }
             case PathType.VirtualFolder:
@@ -584,7 +585,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         }
     }
 
-    private static List<int> SortedChildPids(List<int> childPids,
+    private static List<int> SortChildPids(List<int> childPids,
         Dictionary<int, ProcInfo> map)
     {
         return childPids
@@ -593,22 +594,21 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             .ToList();
     }
 
-    private void WriteImmediateChildren(string parentPath, string directory, List<int> childPids,
-        Dictionary<int, ProcInfo> map, Dictionary<int, List<int>> children)
+    private void WriteImmediateChildren(string parentPath, string directory, List<int> sortedPids,
+        Dictionary<int, ProcInfo> map)
     {
-        foreach (int cpid in SortedChildPids(childPids, map))
+        foreach (int cpid in sortedPids)
         {
             var info = map[cpid];
             var childPath = BuildChildPath(parentPath, FormatSegment(cpid, info.Name));
-            bool hasKids = children.TryGetValue(cpid, out _) && children[cpid].Count > 0;
             WriteItemObject(CreateProcessObject(info, directory), childPath, true);
         }
     }
 
-    private void RecurseChildren(string parentPath, List<int> childPids,
+    private void RecurseChildren(string parentPath, List<int> sortedPids,
         Dictionary<int, ProcInfo> map, Dictionary<int, List<int>> children)
     {
-        foreach (int cpid in SortedChildPids(childPids, map))
+        foreach (int cpid in sortedPids)
         {
             if (!children.TryGetValue(cpid, out var grandKids) || grandKids.Count == 0)
                 continue;
@@ -616,9 +616,9 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             var childPath = BuildChildPath(parentPath, FormatSegment(cpid, info.Name));
             var childDirectory = EnsureDrivePrefix(childPath);
 
-            // Write grandchildren, then recurse deeper
-            WriteImmediateChildren(childPath, childDirectory, grandKids, map, children);
-            RecurseChildren(childPath, grandKids, map, children);
+            var sortedGrandKids = SortChildPids(grandKids, map);
+            WriteImmediateChildren(childPath, childDirectory, sortedGrandKids, map);
+            RecurseChildren(childPath, sortedGrandKids, map, children);
         }
     }
 
