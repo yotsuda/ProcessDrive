@@ -107,6 +107,25 @@ New-ProcDrive           # Creates Proc:\
 New-ProcDrive MyProc    # Creates MyProc:\
 ```
 
+## Process Explorer Feature Mapping
+
+| Process Explorer | ProcessDrive |
+|---|---|
+| Process tree view | `dir Proc:\` / `dir -Recurse` |
+| Process properties (General) | `Get-Item Proc:\chrome_21236 \| Format-List *` |
+| Loaded DLLs | `dir Proc:\chrome_21236\Modules` |
+| Threads | `dir Proc:\chrome_21236\Threads` |
+| TCP/IP connections | `dir Proc:\chrome_21236\Network` |
+| Services | `dir Proc:\svchost_1804\Services` |
+| Kill process | `Remove-Item Proc:\notepad_1234` |
+| Kill process tree | `Remove-Item Proc:\chrome_21236 -Recurse` |
+| Find DLL | `dir Proc:\ \| % { dir "Proc:\$($_.PSChildName)\Modules" -EA 0 } \| ? Name -like '*target*'` |
+| Find process by name | `dir Proc:\ -Include note* -Recurse` |
+| Sort by memory | `dir Proc:\ \| Sort-Object MemMB -Descending` |
+| Sort by CPU | `dir Proc:\ \| Sort-Object CPU -Descending` |
+| Refresh | `dir Proc:\ -Force` |
+| Export to file | `dir Proc:\ -Recurse \| Export-Csv processes.csv` |
+
 ## Requirements
 
 - Windows
