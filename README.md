@@ -120,5 +120,3 @@ ProcessDrive is a `NavigationCmdletProvider` that exposes the Windows process tr
 - **`dir`** uses WMI cache only (fast), **`Get-Item`** adds live stats from `System.Diagnostics.Process`
 - **Network connections** use P/Invoke to `GetExtendedTcpTable` / `GetExtendedUdpTable` (iphlpapi.dll)
 - **Services** are queried from WMI `Win32_Service`
-- **`dir`** is fast — only basic properties per process
-- **`Get-Item`** adds detailed properties (memory breakdown, I/O stats, file version) for a single process

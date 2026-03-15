@@ -6,9 +6,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <Version>0.1.0</Version>
-    <Authors>yoshifumi.tsuda</Authors>
+    <Authors>Yoshifumi Tsuda</Authors>
     <Description>Navigate Windows process tree as a PowerShell drive. A CLI alternative to Process Explorer.</Description>
-    <Copyright>Copyright (c) 2026 yoshifumi.tsuda</Copyright>
+    <Copyright>Copyright (c) 2026 Yoshifumi Tsuda</Copyright>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
