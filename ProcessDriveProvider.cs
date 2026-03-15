@@ -201,7 +201,8 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             return new(PathType.VirtualItem, pid, segments[^2], last);
         }
 
-        return new(PathType.Root, -1, null, null);
+        // Unrecognized path — ItemExists will return false (Pid < 0)
+        return new(PathType.VirtualItem, -1, null, null);
     }
 
     #endregion
