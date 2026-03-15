@@ -545,6 +545,53 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         }
     }
 
+    private void WriteVirtualItem(int pid, string folder, string itemName, string path, string directory)
+    {
+        try
+        {
+            switch (folder.ToLowerInvariant())
+            {
+                case "modules":
+                    var proc = Process.GetProcessById(pid);
+                    foreach (ProcessModule mod in proc.Modules)
+                    {
+                        if (string.Equals(mod.ModuleName, itemName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            WriteItemObject(CreateModuleInfo(mod, directory), path, false);
+                            return;
+                        }
+                    }
+                    break;
+                case "threads":
+                    if (int.TryParse(itemName, out int tid))
+                    {
+                        var proc2 = Process.GetProcessById(pid);
+                        foreach (ProcessThread t in proc2.Threads)
+                        {
+                            if (t.Id == tid)
+                            {
+                                WriteItemObject(CreateThreadInfo(t, directory), path, false);
+                                return;
+                            }
+                        }
+                    }
+                    break;
+                case "services":
+                    using (var searcher = new ManagementObjectSearcher(
+                        $"SELECT Name, DisplayName, State, StartMode FROM Win32_Service WHERE ProcessId = {pid} AND Name = '{itemName}'"))
+                    {
+                        foreach (ManagementObject svc in searcher.Get())
+                        {
+                            WriteItemObject(CreateServiceInfo(svc, directory), path, false);
+                            return;
+                        }
+                    }
+                    break;
+            }
+        }
+        catch { }
+    }
+
     #endregion
 
     #region Navigation
@@ -604,8 +651,8 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                 break;
 
             case PathType.VirtualItem:
-                // Return the item if found
-                WriteItemObject(new PSObject(info.VirtualItem!), path, false);
+                if (info.Pid >= 0 && info.VirtualFolder != null && info.VirtualItem != null)
+                    WriteVirtualItem(info.Pid, info.VirtualFolder, info.VirtualItem, path, directory);
                 break;
         }
     }
