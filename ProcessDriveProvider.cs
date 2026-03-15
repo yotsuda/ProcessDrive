@@ -590,6 +590,39 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                         }
                     }
                     break;
+                case "network":
+                    // Parse segment: "TCP_192.168.0.18_53610" → protocol + addr + port
+                    var parts = itemName.Split('_', 3);
+                    if (parts.Length >= 3 && int.TryParse(parts[2], out int port))
+                    {
+                        var protocol = parts[0];
+                        var addr = parts[1];
+                        if (protocol.Equals("TCP", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (var conn in NetworkHelper.GetTcpConnections(pid))
+                            {
+                                if (conn.LocalAddr == addr && conn.LocalPort == port)
+                                {
+                                    WriteItemObject(CreateNetworkInfo("TCP", conn.LocalAddr, conn.LocalPort,
+                                        conn.RemoteAddr, conn.RemotePort, conn.State, directory), path, false);
+                                    return;
+                                }
+                            }
+                        }
+                        else if (protocol.Equals("UDP", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (var conn in NetworkHelper.GetUdpListeners(pid))
+                            {
+                                if (conn.LocalAddr == addr && conn.LocalPort == port)
+                                {
+                                    WriteItemObject(CreateNetworkInfo("UDP", conn.LocalAddr, conn.LocalPort,
+                                        "", 0, "", directory), path, false);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    break;
             }
         }
         catch { }
