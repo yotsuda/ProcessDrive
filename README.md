@@ -141,7 +141,7 @@ dir Proc:\ -Include note* -Recurse
 
 **Find DLL across all processes**
 ```powershell
-dir Proc:\ | % { dir "Proc:\$($_.PSChildName)\Modules" -EA Ignore } | ? Name -like '*target*'
+dir Proc:\ | % { dir "Proc:\$($_.PSChildName)\Modules" -EA Ignore } | ? Name -like '*gdi*'
 ```
 
 **Sort by memory / CPU**
