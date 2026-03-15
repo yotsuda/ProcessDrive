@@ -504,7 +504,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         }
         catch (Exception ex)
         {
-            WriteWarning($"Cannot enumerate modules for PID {pid}: {ex.Message}");
+            WriteError(new ErrorRecord(ex, "GetModulesFailed", ErrorCategory.PermissionDenied, pid));
         }
     }
 
@@ -523,7 +523,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         }
         catch (Exception ex)
         {
-            WriteWarning($"Cannot enumerate threads for PID {pid}: {ex.Message}");
+            WriteError(new ErrorRecord(ex, "GetThreadsFailed", ErrorCategory.PermissionDenied, pid));
         }
     }
 
@@ -550,7 +550,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         }
         catch (Exception ex)
         {
-            WriteWarning($"Cannot enumerate services for PID {pid}: {ex.Message}");
+            WriteError(new ErrorRecord(ex, "GetServicesFailed", ErrorCategory.PermissionDenied, pid));
         }
     }
 
@@ -578,7 +578,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         }
         catch (Exception ex)
         {
-            WriteWarning($"Cannot enumerate network connections for PID {pid}: {ex.Message}");
+            WriteError(new ErrorRecord(ex, "GetNetworkFailed", ErrorCategory.PermissionDenied, pid));
         }
     }
 
