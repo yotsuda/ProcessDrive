@@ -90,7 +90,7 @@
           <TableColumnHeader><Label>Priority</Label><Width>9</Width><Alignment>Right</Alignment></TableColumnHeader>
           <TableColumnHeader><Label>CPU(s)</Label><Width>10</Width><Alignment>Right</Alignment></TableColumnHeader>
           <TableColumnHeader><Label>StartTime</Label><Width>20</Width></TableColumnHeader>
-          <TableColumnHeader><Label>StartAddress</Label></TableColumnHeader>
+          <TableColumnHeader><Label>StartAddress</Label><Alignment>Right</Alignment></TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
           <TableRowEntry>
