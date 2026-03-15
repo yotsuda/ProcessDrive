@@ -120,7 +120,12 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
     private static void InvalidateCache()
     {
-        lock (_cacheLock) { _cacheTime = DateTime.MinValue; }
+        lock (_cacheLock)
+        {
+            // Skip if cache was just rebuilt (prevents hundreds of WMI queries during recursive wildcard resolution)
+            if ((DateTime.UtcNow - _cacheTime).TotalSeconds > 1)
+                _cacheTime = DateTime.MinValue;
+        }
     }
     private static DateTime _cacheTime;
     private static (Dictionary<int, ProcInfo> map, Dictionary<int, List<int>> children, List<int> roots) _cache;
@@ -631,6 +636,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
     protected override void GetChildNames(string path, ReturnContainers returnContainers)
     {
+        if (Force) InvalidateCache();
         var info = ParsePathInfo(path);
 
         switch (info.Type)
