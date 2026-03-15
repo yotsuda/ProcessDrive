@@ -209,7 +209,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
     #region Process Tree
 
     private sealed record ProcInfo(int Pid, int ParentPid, string Name, string CommandLine,
-        long WorkingSetSize, int ThreadCount, int HandleCount, string CreationDate);
+        long WorkingSetSize, int ThreadCount, int HandleCount, string CreationDate, double CpuSeconds);
 
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(10);
 
@@ -238,7 +238,8 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
             using var searcher = new ManagementObjectSearcher(
                 "SELECT ProcessId, ParentProcessId, Name, CommandLine, " +
-                "WorkingSetSize, ThreadCount, HandleCount, CreationDate FROM Win32_Process");
+                "WorkingSetSize, ThreadCount, HandleCount, CreationDate, " +
+                "KernelModeTime, UserModeTime FROM Win32_Process");
 
             foreach (ManagementObject obj in searcher.Get())
             {
@@ -250,9 +251,13 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                 int threads = Convert.ToInt32(obj["ThreadCount"] ?? 0);
                 int handles = Convert.ToInt32(obj["HandleCount"] ?? 0);
                 string creation = obj["CreationDate"]?.ToString() ?? "";
+                // KernelModeTime + UserModeTime are in 100-nanosecond units
+                long kernel = Convert.ToInt64(obj["KernelModeTime"] ?? 0);
+                long user = Convert.ToInt64(obj["UserModeTime"] ?? 0);
+                double cpuSeconds = Math.Round((kernel + user) / 10_000_000.0, 1);
                 if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                     name = name[..^4];
-                map[pid] = new ProcInfo(pid, ppid, name, cmdLine, ws, threads, handles, creation);
+                map[pid] = new ProcInfo(pid, ppid, name, cmdLine, ws, threads, handles, creation, cpuSeconds);
             }
 
             foreach (var proc in map.Values)
@@ -286,6 +291,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         ParentPID = info.ParentPid,
         CommandLine = info.CommandLine,
         MemMB = Math.Round(info.WorkingSetSize / 1048576.0, 1),
+        CPU = info.CpuSeconds > 0 ? info.CpuSeconds.ToString() : "",
         Threads = info.ThreadCount,
         Handles = info.HandleCount,
         StartTime = FormatWmiDateTime(info.CreationDate)
@@ -311,6 +317,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
             ParentPID = info.ParentPid,
             CommandLine = info.CommandLine,
             MemMB = Math.Round(info.WorkingSetSize / 1048576.0, 1),
+            CPU = info.CpuSeconds > 0 ? info.CpuSeconds.ToString() : "",
             Threads = info.ThreadCount,
             Handles = info.HandleCount,
             StartTime = FormatWmiDateTime(info.CreationDate)
