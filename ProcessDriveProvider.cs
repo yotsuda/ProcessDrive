@@ -116,7 +116,12 @@ public class ProcessDriveProvider : NavigationCmdletProvider
     private sealed record ProcInfo(int Pid, int ParentPid, string Name, string CommandLine,
         long WorkingSetSize, int ThreadCount, int HandleCount, string CreationDate);
 
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(10);
+
+    private static void InvalidateCache()
+    {
+        lock (_cacheLock) { _cacheTime = DateTime.MinValue; }
+    }
     private static DateTime _cacheTime;
     private static (Dictionary<int, ProcInfo> map, Dictionary<int, List<int>> children, List<int> roots) _cache;
     private static readonly object _cacheLock = new();
@@ -534,6 +539,8 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 
     protected override void GetChildItems(string path, bool recurse)
     {
+        if (Force) InvalidateCache();
+
         var info = ParsePathInfo(path);
 
         switch (info.Type)
