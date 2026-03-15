@@ -23,6 +23,14 @@ cd ..                                   # Go back to parent
 cd \                                    # Go back to root
 ```
 
+Tab completion works throughout the drive:
+
+```
+cd chr<Tab>        →  cd chrome_21236       # Process name completion
+cd Mod<Tab>        →  cd Modules            # Virtual folder completion
+Get-Item ntd<Tab>  →  Get-Item ntdll.dll    # Module name completion (inside Modules)
+```
+
 ### Process Details (Get-Item)
 
 ```powershell
