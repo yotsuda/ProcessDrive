@@ -51,6 +51,19 @@ dir Proc:\chrome_21236\Services         # Associated Windows services
 dir Proc:\chrome_21236\Network          # TCP/UDP connections (Local, Remote, State)
 ```
 
+### Search Processes
+
+```powershell
+# Find a process anywhere in the tree
+dir Proc:\ -Include note* -Recurse
+
+# Refresh cache and search
+dir Proc:\ -Include note* -Recurse -Force
+
+# Alternative: pipeline filter
+dir Proc:\ -Recurse | Where-Object Name -like 'note*'
+```
+
 ### Kill Processes
 
 ```powershell
@@ -103,8 +116,8 @@ New-ProcDrive MyProc    # Creates MyProc:\
 
 ProcessDrive is a `NavigationCmdletProvider` that exposes the Windows process tree as a hierarchical drive.
 
-- **Process tree** is built from WMI `Win32_Process` (cached for 2 seconds)
-- **Process stats** (CPU, memory) come from `System.Diagnostics.Process`
+- **Process tree** is built from WMI `Win32_Process` (cached for 10 seconds, `dir -Force` to refresh)
+- **`dir`** uses WMI cache only (fast), **`Get-Item`** adds live stats from `System.Diagnostics.Process`
 - **Network connections** use P/Invoke to `GetExtendedTcpTable` / `GetExtendedUdpTable` (iphlpapi.dll)
 - **Services** are queried from WMI `Win32_Service`
 - **`dir`** is fast — only basic properties per process
