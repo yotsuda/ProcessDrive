@@ -864,7 +864,21 @@ public class ProcessDriveProvider : NavigationCmdletProvider
         var result = base.NormalizeRelativePath(path, basePath);
         if (result.StartsWith(Sep) && result.Length > 1)
             result = result[1..];
-        return result;
+
+        // Canonicalize virtual folder name casing (e.g. "network" → "Network")
+        var parts = result.Split(Sep);
+        for (int i = 0; i < parts.Length; i++)
+        {
+            foreach (var folder in VirtualFolderNames)
+            {
+                if (string.Equals(parts[i], folder, StringComparison.OrdinalIgnoreCase))
+                {
+                    parts[i] = folder;
+                    break;
+                }
+            }
+        }
+        return string.Join(Sep, parts);
     }
 
     #endregion
