@@ -120,7 +120,7 @@
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <TableColumnHeader><Label>Name</Label><Width>24</Width></TableColumnHeader>
+          <TableColumnHeader><Label>Name</Label></TableColumnHeader>
           <TableColumnHeader><Label>DisplayName</Label><Width>36</Width></TableColumnHeader>
           <TableColumnHeader><Label>State</Label><Width>8</Width></TableColumnHeader>
           <TableColumnHeader><Label>StartMode</Label></TableColumnHeader>
