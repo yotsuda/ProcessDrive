@@ -791,6 +791,7 @@ public class ProcessDriveProvider : NavigationCmdletProvider
 }
 
 [Cmdlet(VerbsCommon.New, "ProcDrive")]
+[OutputType(typeof(PSDriveInfo))]
 public class NewProcDriveCmdlet : PSCmdlet
 {
     [Parameter(Position = 0)]
