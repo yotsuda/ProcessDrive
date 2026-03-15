@@ -862,9 +862,18 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                     switch (info.VirtualFolder!.ToLowerInvariant())
                     {
                         case "modules":
-                            var proc = Process.GetProcessById(info.Pid);
-                            foreach (ProcessModule mod in proc.Modules)
-                                WriteItemObject(mod.ModuleName, BuildChildPath(path, mod.ModuleName), false);
+                            var modules = GetVfCache(_moduleCache, info.Pid);
+                            if (modules != null)
+                            {
+                                foreach (var mod in modules)
+                                    WriteItemObject(mod.Name, BuildChildPath(path, mod.Name), false);
+                            }
+                            else
+                            {
+                                var proc = Process.GetProcessById(info.Pid);
+                                foreach (ProcessModule mod in proc.Modules)
+                                    WriteItemObject(mod.ModuleName, BuildChildPath(path, mod.ModuleName), false);
+                            }
                             break;
                         case "threads":
                             var proc2 = Process.GetProcessById(info.Pid);
@@ -875,9 +884,16 @@ public class ProcessDriveProvider : NavigationCmdletProvider
                             }
                             break;
                         case "services":
-                            using (var searcher = new ManagementObjectSearcher(
-                                $"SELECT Name FROM Win32_Service WHERE ProcessId = {info.Pid}"))
+                            var services = GetVfCache(_serviceCache, info.Pid);
+                            if (services != null)
                             {
+                                foreach (var svc in services)
+                                    WriteItemObject(svc.Name, BuildChildPath(path, svc.Name), false);
+                            }
+                            else
+                            {
+                                using var searcher = new ManagementObjectSearcher(
+                                    $"SELECT Name FROM Win32_Service WHERE ProcessId = {info.Pid}");
                                 foreach (ManagementObject svc in searcher.Get())
                                 {
                                     var name = svc["Name"]?.ToString() ?? "";
