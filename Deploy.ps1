@@ -23,6 +23,10 @@ $ModuleDir = Join-Path $ProjectDir 'module'
 Copy-Item "$BinDir\$ModuleName.dll" $TargetDir -Force
 Copy-Item "$ModuleDir\$ModuleName.psd1" $TargetDir -Force
 Copy-Item "$ModuleDir\$ModuleName.format.ps1xml" $TargetDir -Force
+foreach ($locale in 'en-US', 'ja-JP') {
+    $src = Join-Path $ModuleDir $locale
+    if (Test-Path $src) { Copy-Item $src $TargetDir -Recurse -Force }
+}
 
 Write-Host ''
 Write-Host "Deployed to: $TargetDir" -ForegroundColor Green
