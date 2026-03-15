@@ -10,6 +10,17 @@ cd Proc:\
 dir
 ```
 
+## Using with AI Agents (PowerShell.MCP)
+
+ProcessDrive works with [PowerShell.MCP](https://github.com/yotsuda/PowerShell.MCP#readme), enabling AI agents (Claude, GitHub Copilot, etc.) to explore processes through natural conversation:
+
+- "What child processes does chrome have?" → `dir Proc:\chrome_21236`
+- "Show me chrome's network connections" → `dir Proc:\chrome_21236\Network`
+- "Which services are hosted by svchost PID 1804?" → `dir Proc:\svchost_1804\Services`
+- "Find all processes that loaded gdi32.dll" → `dir Proc:\ | % { dir "Proc:\$($_.PSChildName)\Modules" -EA Ignore } | ? Name -like '*gdi*'`
+
+The typed DTO output (`ProcessInfo`, `ModuleInfo`, `ThreadInfo`, etc.) makes it easy for AI agents to parse and reason about process data.
+
 ## Features
 
 ### Process Tree Navigation
@@ -167,17 +178,6 @@ dir Proc:\ -Force
 ```powershell
 dir Proc:\ -Recurse | Export-Csv processes.csv
 ```
-
-## Using with AI Agents (PowerShell.MCP)
-
-ProcessDrive works with [PowerShell.MCP](https://github.com/yotsuda/PowerShell.MCP#readme), enabling AI agents (Claude, GitHub Copilot, etc.) to explore processes through natural conversation:
-
-- "What child processes does chrome have?" → `dir Proc:\chrome_21236`
-- "Show me chrome's network connections" → `dir Proc:\chrome_21236\Network`
-- "Which services are hosted by svchost PID 1804?" → `dir Proc:\svchost_1804\Services`
-- "Find all processes that loaded gdi32.dll" → `dir Proc:\ | % { dir "Proc:\$($_.PSChildName)\Modules" -EA Ignore } | ? Name -like '*gdi*'`
-
-The typed DTO output (`ProcessInfo`, `ModuleInfo`, `ThreadInfo`, etc.) makes it easy for AI agents to parse and reason about process data.
 
 ## Requirements
 
