@@ -168,6 +168,17 @@ dir Proc:\ -Force
 dir Proc:\ -Recurse | Export-Csv processes.csv
 ```
 
+## Using with AI Agents (PowerShell.MCP)
+
+ProcessDrive works with [PowerShell.MCP](https://www.powershellgallery.com/packages/PowerShell.MCP), enabling AI agents (Claude, GitHub Copilot, etc.) to explore processes through natural conversation:
+
+- "What processes are using the most memory?" → `dir Proc:\ | Sort-Object MemMB -Descending | Select-Object -First 10`
+- "Show me chrome's network connections" → `dir Proc:\chrome_21236\Network`
+- "What DLLs does devenv have loaded?" → `dir Proc:\devenv_24032\Modules`
+- "Kill all notepad processes" → `dir Proc:\ -Include notepad* -Recurse | Remove-Item`
+
+The typed DTO output (`ProcessInfo`, `ModuleInfo`, `ThreadInfo`, etc.) makes it easy for AI agents to parse and reason about process data.
+
 ## Requirements
 
 - Windows
